@@ -96,7 +96,9 @@ func (m *Connection) handleStartStream(req *startStreamRequest) error {
 		return fmt.Errorf("writer initialized, cannot init twice")
 	}
 	// w, err := NewMp3Writer("test1.mp3", req.SampleRate, req.Bits, req.Channels)
-	w, err := NewPcmWriter("test1.pcm", req.SampleRate, req.Bits, req.Channels)
+	// w, err := NewPcmWriter("test1.pcm", req.SampleRate, req.Bits, req.Channels)
+	// w, err := NewWavWriter("test1.wav", req.SampleRate, req.Bits, req.Channels)
+	w, err := NewGzipWavWriter("test1.wav", req.SampleRate, req.Bits, req.Channels)
 	if err != nil {
 		return fmt.Errorf("new mp3 writer failed %w", err)
 	}
