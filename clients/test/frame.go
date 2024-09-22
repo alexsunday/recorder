@@ -120,6 +120,27 @@ func parseStartStreamRequest(f *Frame) (*startStreamRequest, error) {
 	return &rs, err
 }
 
-func NewStartStreamFrame() (*Frame, error) {
-	return nil, nil
+func NewStartStreamFrame(bits, channels, sampleRate int) (*Frame, error) {
+	var req = &startStreamRequest{
+		Bits:       bits,
+		Channels:   channels,
+		SampleRate: sampleRate,
+	}
+	body, err := json.Marshal(req)
+	if err != nil {
+		return nil, fmt.Errorf("marshal body failed %w", err)
+	}
+	return NewFrame(startStream, 0, body), nil
+}
+
+// 回复客户端 code 为0代表成功
+type startStreamResponse struct {
+	Code int `json:"code"`
+	ID   int `json:"id"`
+}
+
+func parseStartStreamResponse(f *Frame) (*startStreamResponse, error) {
+	var rs startStreamResponse
+	err := json.Unmarshal(f.body, &rs)
+	return &rs, err
 }
