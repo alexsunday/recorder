@@ -2,6 +2,7 @@ package main
 
 import (
 	"encoding/binary"
+	"encoding/hex"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -19,6 +20,14 @@ const (
 	stopStream  byte = 0x03
 	audioStream byte = 0x04
 )
+
+func NewFrame(cmd, opt byte, body []byte) *Frame {
+	return &Frame{
+		cmd:  cmd,
+		opt:  opt,
+		body: body,
+	}
+}
 
 func fromReader(r io.Reader) (*Frame, error) {
 	var head = make([]byte, 4)
@@ -58,6 +67,7 @@ func (m *Frame) WriteTo(w io.Writer) (int64, error) {
 	binary.BigEndian.PutUint16(head[:2], length)
 	head[2] = m.cmd
 	head[3] = m.opt
+	logger.Info("HEAD", "hex", hex.EncodeToString(head))
 	headerSent, err := w.Write(head)
 	if err != nil {
 		return 0, fmt.Errorf("send head failed %w", err)
@@ -66,6 +76,7 @@ func (m *Frame) WriteTo(w io.Writer) (int64, error) {
 		return 0, fmt.Errorf("send head failed, length not match %d %d", headerSent, len(head))
 	}
 
+	logger.Info("HEAD", "hex", hex.EncodeToString(m.body))
 	bodySent, err := w.Write(m.body)
 	if err != nil {
 		return 0, fmt.Errorf("send body failed %w", err)
@@ -98,4 +109,22 @@ func parseStartStreamRequest(f *Frame) (*startStreamRequest, error) {
 	var rs startStreamRequest
 	err := json.Unmarshal(f.body, &rs)
 	return &rs, err
+}
+
+// 回复客户端 code 为0代表成功
+type startStreamResponse struct {
+	Code int `json:"code"`
+	ID   int `json:"id"`
+}
+
+func NewStartStreamResponseFrame(code, id int) (*Frame, error) {
+	var rs = &startStreamResponse{
+		Code: code,
+		ID:   id,
+	}
+	body, err := json.Marshal(rs)
+	if err != nil {
+		return nil, fmt.Errorf("json marshal body failed %w", err)
+	}
+	return NewFrame(startStream, 0, body), nil
 }

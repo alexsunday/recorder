@@ -44,6 +44,10 @@ func (m *Connection) Close() {
 	if err != nil {
 		logger.Warn("close failed", "error", err)
 	}
+	if m.writer != nil {
+		m.writer.Close()
+		m.writer = nil
+	}
 	m.cancel()
 }
 
@@ -56,15 +60,18 @@ func (m *Connection) Handle() {
 				logger.Warn("channel in error")
 				return
 			}
-			err = m.handleFrame(frameIn)
-			if err != nil {
-				logger.Warn("frame handle failed", "error", err)
-			}
+			go func() {
+				err = m.handleFrame(frameIn)
+				if err != nil {
+					logger.Warn("frame handle failed", "error", err)
+				}
+			}()
 		case frameOut, ok := <-m.chOut:
 			if !ok {
 				logger.Warn("channel out error")
 				return
 			}
+			logger.Info("channel out received frame", "cmd", frameOut.cmd)
 			err = m.outFrame(frameOut)
 			if err != nil {
 				logger.Warn("send frame failed", "error", err)
@@ -77,7 +84,8 @@ func (m *Connection) Handle() {
 }
 
 // 暂时直接返回成功
-func (m *Connection) handleLoginDevice(_ *loginRequest) error {
+func (m *Connection) handleLoginDevice(r *loginRequest) error {
+	logger.Info("process login request", "session", r.Session, "device", r.Device)
 	m.writeFrame(NewLoginResponse(0x00))
 	return nil
 }
@@ -87,11 +95,17 @@ func (m *Connection) handleStartStream(req *startStreamRequest) error {
 	if m.writer != nil {
 		return fmt.Errorf("writer initialized, cannot init twice")
 	}
-	w, err := NewMp3Writer("test1.mp3", req.SampleRate, req.Bits, req.Channels)
+	// w, err := NewMp3Writer("test1.mp3", req.SampleRate, req.Bits, req.Channels)
+	w, err := NewPcmWriter("test1.pcm", req.SampleRate, req.Bits, req.Channels)
 	if err != nil {
 		return fmt.Errorf("new mp3 writer failed %w", err)
 	}
 	m.writer = w
+	out, err := NewStartStreamResponseFrame(0, 0x1001)
+	if err != nil {
+		return fmt.Errorf("new start stream response failed %w", err)
+	}
+	m.writeFrame(out)
 	return nil
 }
 

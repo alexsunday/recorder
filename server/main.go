@@ -39,5 +39,6 @@ func listenSocket(listenAddr string) error {
 
 		c := NewConnection(ctx, conn)
 		go c.ReadLoop()
+		go c.Handle()
 	}
 }

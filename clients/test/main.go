@@ -108,6 +108,7 @@ func connectToHost(host, device, session string) (io.ReadWriteCloser, error) {
 	if err != nil {
 		return nil, fmt.Errorf("dial tcp failed %w", err)
 	}
+	logger.Info("connected to remote host", "local", dst.LocalAddr())
 
 	// login request
 	devReq, err := NewLoginFrame(session, device)
@@ -118,6 +119,7 @@ func connectToHost(host, device, session string) (io.ReadWriteCloser, error) {
 	if err != nil {
 		return nil, fmt.Errorf("write frame to peer failed %w", err)
 	}
+	logger.Info("writed login request frame")
 
 	loginRsp, err := fromReader(dst)
 	if err != nil {
@@ -130,7 +132,7 @@ func connectToHost(host, device, session string) (io.ReadWriteCloser, error) {
 	if loginRsp.body == nil || len(loginRsp.body) == 0 || loginRsp.body[0] != 0x00 {
 		return nil, fmt.Errorf("response failed")
 	}
-
+	logger.Info("login response succeed", "code", loginRsp.body[0])
 	return dst, nil
 }
 
@@ -144,6 +146,8 @@ func sendStartStreamRequest(p io.ReadWriteCloser, opt *recordOpt) error {
 	if err != nil {
 		return fmt.Errorf("write start stream failed %w", err)
 	}
+	logger.Info("writed start stream request frame")
+
 	ssRsp, err := fromReader(p)
 	if err != nil {
 		return fmt.Errorf("receive start stream response failed %w", err)
@@ -155,6 +159,7 @@ func sendStartStreamRequest(p io.ReadWriteCloser, opt *recordOpt) error {
 	if rsp.Code != 0 {
 		return fmt.Errorf("start stream request failed %d", rsp.Code)
 	}
+	logger.Info("start stream succeed", "code", rsp.Code)
 	return nil
 }
 
