@@ -1,44 +1,26 @@
 package main
 
 import (
-	"context"
-	"fmt"
 	"log/slog"
-	"net"
 	"os"
+	"recorder/proto"
+	"recorder/web"
 )
 
 var (
-	logger = slog.New(slog.NewTextHandler(os.Stderr, nil))
+	logger = slog.New(slog.NewTextHandler(os.Stderr, nil).WithGroup("main"))
 )
 
 func main() {
-	err := listenSocket("0.0.0.0:12001")
+	err := web.WebInit("0.0.0.0:18000")
 	if err != nil {
-		logger.Warn("listen socket failed", "error", err)
+		logger.Warn("websocket init failed", "error", err)
 		os.Exit(1)
 	}
-}
 
-func listenSocket(listenAddr string) error {
-	lAddr, err := net.ResolveTCPAddr("tcp", listenAddr)
+	err = proto.SocketInit("0.0.0.0:12001")
 	if err != nil {
-		return fmt.Errorf("resolve addr failed %w", err)
-	}
-	listener, err := net.ListenTCP("tcp", lAddr)
-	if err != nil {
-		return fmt.Errorf("listen tcp %s failed %w", listenAddr, err)
-	}
-
-	ctx := context.Background()
-	for {
-		conn, err := listener.AcceptTCP()
-		if err != nil {
-			return fmt.Errorf("accept tcp failed %w", err)
-		}
-
-		c := NewConnection(ctx, conn)
-		go c.ReadLoop()
-		go c.Handle()
+		logger.Warn("socket init failed", "error", err)
+		os.Exit(1)
 	}
 }

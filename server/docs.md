@@ -25,3 +25,17 @@ N 字节包体，可以为空
 // 顺便总结一下写 golang 服务器程序的惯用套路
 1. connection 对象，至少要有 的对象， io.ReadWriteCloser, context.Context, context.CancelFunc, chIn/chOut chan *Frame, 
 2. 必须至少有的方法 ReadLoop, Handle
+
+// TODO
+0. 加入配置
+1. 引入 websocket 
+2. 引入 gin，加入 业务API
+3. 引入数据库 gorm 等
+
+// 设计一个简单的业务系统
+1. 用户模型
+2. 设备模型 ？
+
+接口
+注册，登录
+设备登记

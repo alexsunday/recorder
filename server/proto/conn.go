@@ -1,9 +1,15 @@
-package main
+package proto
 
 import (
 	"context"
 	"fmt"
 	"io"
+	"log/slog"
+	"os"
+)
+
+var (
+	logger = slog.New(slog.NewTextHandler(os.Stderr, nil))
 )
 
 type Connection struct {
