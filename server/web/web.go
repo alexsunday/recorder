@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"os"
 	"recorder/proto"
+	"time"
 
 	"github.com/gin-gonic/gin"
 	"github.com/gorilla/websocket"
@@ -79,6 +80,14 @@ func (m *wsReadWrapper) readFromLink() error {
 	}
 	if msgType == websocket.TextMessage {
 		return fmt.Errorf("unsupport text message now")
+	}
+	if msgType == websocket.CloseMessage {
+		logger.Warn("received a valid close message")
+		return m.Conn.Close()
+	}
+	if msgType == websocket.PingMessage {
+		m.Conn.WriteControl(websocket.PongMessage, nil, time.Now().Add(5*time.Second))
+		return nil
 	}
 
 	m.readCache = append(m.readCache, buf...)
