@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:recorder/service/conn.dart';
+import 'package:recorder/service/frame.dart';
 import 'package:recorder/service/recorder.dart';
 
 class HomePage extends StatefulWidget {
@@ -59,10 +60,15 @@ class _HomePage extends State<HomePage> {
 
   _onOpenClicked() {
     glws.open();
+    recorder.setOnData((d) {
+      final out = Frame.newPcmFrame(d);
+      glws.writeFrame(out);
+    });
   }
 
   _onCloseClicked() {
     glws.close();
+    recorder.setOnData((d) {});
   }
 
   _onBeginRecord() {

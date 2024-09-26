@@ -76,8 +76,8 @@ class Frame {
     return Frame(cmdStartStream, 0x00, ascii.encode(body));
   }
 
-  newPcmFrame() {
-    //
+  static newPcmFrame(Uint8List pcm) {
+    return Frame(cmdAudioStream, 0x00, pcm);
   }
 }
 

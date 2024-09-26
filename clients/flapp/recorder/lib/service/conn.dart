@@ -46,11 +46,11 @@ class WebSocketConn {
   }
 
   _onConnectError(dynamic e) {
-    print('连接失败 ${e}');
+    print('连接失败 $e');
   }
 
   _onError(dynamic e) {
-    print('出错了 ${e}');
+    print('出错了 $e');
   }
 
   _onDone() {
@@ -126,10 +126,6 @@ class WebSocketConn {
       sock!.close(0x1000, "close");
       sock = null;
     }
-  }
-
-  writePCM() {
-    //
   }
 }
 
