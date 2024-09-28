@@ -28,15 +28,28 @@ func fromReader(r io.Reader) (*Frame, error) {
 	}
 
 	left := binary.BigEndian.Uint16(head[:2])
-	var body = make([]byte, left-4)
-	_, err = io.ReadFull(r, body)
+	var data = make([]byte, left-4)
+	_, err = io.ReadFull(r, data)
 	if err != nil {
 		return nil, fmt.Errorf("read body failed %w", err)
 	}
 
+	// 此处考虑加密与压缩
+	opt := head[3]
+	var body []byte
+	var compressMethod byte = (opt & (3 << 6)) >> 6
+	if compressMethod == 0x01 {
+		body, err = NewZstd().Decompress(data)
+		if err != nil {
+			return nil, fmt.Errorf("decompress data failed")
+		}
+	} else if compressMethod == 0x00 {
+		body = data
+	}
+
 	return &Frame{
 		cmd:  head[2],
-		opt:  head[3],
+		opt:  opt,
 		body: body,
 	}, nil
 }
@@ -57,12 +70,26 @@ func NewLoginResponse(code byte) *Frame {
 	}
 }
 
+// 写入时 看看 opt 如设置要压缩 则执行压缩后再写入
 func (m *Frame) WriteTo(w io.Writer) (int64, error) {
-	if (len(m.body) + 4) >= 0xFFFF {
-		return 0, fmt.Errorf("too big body %d", len(m.body))
+	var err error
+	var data []byte
+	var cm byte = (m.opt & (3 << 6)) >> 6
+	if cm == 0x00 {
+		data = m.body
+	} else if cm == 0x01 {
+		data, err = NewZstd().Compress(m.body)
+		if err != nil {
+			return 0, fmt.Errorf("compress data failed %w", err)
+		}
+		logger.Info("compress", "origin", len(m.body), "compress", len(data))
+	}
+
+	if (len(data) + 4) >= 0xFFFF {
+		return 0, fmt.Errorf("too big body %d", len(data))
 	}
 	var head = make([]byte, 4)
-	var length = uint16(4 + len(m.body))
+	var length = uint16(4 + len(data))
 	binary.BigEndian.PutUint16(head[:2], length)
 	head[2] = m.cmd
 	head[3] = m.opt
@@ -74,12 +101,12 @@ func (m *Frame) WriteTo(w io.Writer) (int64, error) {
 		return 0, fmt.Errorf("send head failed, length not match %d %d", headerSent, len(head))
 	}
 
-	bodySent, err := w.Write(m.body)
+	bodySent, err := w.Write(data)
 	if err != nil {
 		return 0, fmt.Errorf("send body failed %w", err)
 	}
-	if bodySent != len(m.body) {
-		return 0, fmt.Errorf("send body failed, length not match %d %d", bodySent, len(m.body))
+	if bodySent != len(data) {
+		return 0, fmt.Errorf("send body failed, length not match %d %d", bodySent, len(data))
 	}
 	return int64(headerSent + bodySent), nil
 }

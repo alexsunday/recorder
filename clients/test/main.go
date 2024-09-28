@@ -56,16 +56,21 @@ func startRecord(out io.ReadWriteCloser, opt *recordOpt) error {
 	captchedSamples := make([]byte, 0)
 	// sizeInBytes := uint32(malgo.SampleSizeInBytes(devCfg.Capture.Format))
 
+	audioCache := NewAudioCache(out, opt.SampleRate, opt.SampleDepth, opt.Channels)
+
 	onRecvFrames := func(pOutputSample, pInputSamples []byte, frameCount uint32) {
 		// sampleCount := frameCount * devCfg.Capture.Channels * sizeInBytes
 		// newCaptchedSampleCount := capturedSampleCount + sampleCount
 		// captchedSamples = append(captchedSamples, pInputSamples...)
 		// capturedSampleCount = newCaptchedSampleCount
 		// pInputSamples 就是录制的内容
-		_, err = NewFrame(audioStream, 0, pInputSamples).WriteTo(out)
-		if err != nil {
-			logger.Warn("输出音频流失败", "error", err)
-		}
+
+		// var opt byte = 1 << 6
+		// _, err = NewFrame(audioStream, opt, pInputSamples).WriteTo(out)
+		// if err != nil {
+		// 	logger.Warn("输出音频流失败", "error", err)
+		// }
+		audioCache.Add(pInputSamples)
 	}
 
 	logger.Info("recording...")

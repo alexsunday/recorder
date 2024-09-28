@@ -6,6 +6,7 @@ require (
 	github.com/gin-gonic/gin v1.10.0
 	github.com/gorilla/websocket v1.5.3
 	github.com/henryleu/go-wav v0.0.0-20211213085422-7cfd89010ffc
+	github.com/klauspost/compress v1.17.10
 )
 
 require (

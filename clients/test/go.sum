@@ -1,2 +1,4 @@
 github.com/gen2brain/malgo v0.11.22 h1:fRtTbzVI9CDWnfEJGo/GxKxN7pXtCb0NsAeUVUjZk9U=
 github.com/gen2brain/malgo v0.11.22/go.mod h1:f9TtuN7DVrXMiV/yIceMeWpvanyVzJQMlBecJFVMxww=
+github.com/klauspost/compress v1.17.10 h1:oXAz+Vh0PMUvJczoi+flxpnBEPxoER1IaAnU/NMPtT0=
+github.com/klauspost/compress v1.17.10/go.mod h1:pMDklpSncoRMuLFrf1W9Ss9KT+0rH90U12bZKk7uwG0=
