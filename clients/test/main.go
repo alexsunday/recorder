@@ -92,6 +92,7 @@ func startRecord(out io.ReadWriteCloser, opt *recordOpt) error {
 	logger.Info("press enter to stop recording...")
 	fmt.Scanln()
 	device.Uninit()
+	audioCache.Add(nil)
 
 	logger.Info("captched", "samples", capturedSampleCount, "buf", len(captchedSamples))
 	return nil

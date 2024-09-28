@@ -25,21 +25,25 @@ func NewAudioCache(o io.ReadWriteCloser, sampleRate, bitsDepth, chanCount int) *
 控制，每次发出 50 ms 数据
 */
 func (m *audioCache) Add(d []byte) {
+	// nil 为结束，清空缓冲区
+	if d == nil && len(m.buf) > 0 {
+		m.send()
+		return
+	}
+
 	m.buf = append(m.buf, d...)
 	// 首先计算 50 ms 的数据量
 	bits := m.sampleRate / 1000 * (m.bitsDepth / 8) * 50
 	if len(m.buf) > bits {
-		err := m.send()
-		if err != nil {
-			logger.Warn("输出音频流失败", "error", err)
-		}
-
-		m.buf = make([]byte, 0)
+		m.send()
 	}
 }
 
-func (m *audioCache) send() error {
+func (m *audioCache) send() {
 	var opt byte = 1 << 6
 	_, err := NewFrame(audioStream, opt, m.buf).WriteTo(m.out)
-	return err
+	if err != nil {
+		logger.Warn("输出音频流失败", "error", err)
+	}
+	m.buf = make([]byte, 0)
 }
